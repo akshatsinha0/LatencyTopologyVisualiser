@@ -39,13 +39,13 @@ export function approxRttMs(km:number){
 
 /***
  * Map latency to categorical color token.
- * Returns CSS color variables for low/medium/high thresholds.
+ * Returns hex colors suitable for THREE.Color parsing.
  * Thresholds: <80ms green, 80-160ms amber, >=160ms red.
 ***/
 export function colorForLatency(ms:number){
-  if(ms<80) return "var(--ok)";
-  if(ms<160) return "var(--warn)";
-  return "var(--err)";
+  if(ms<80) return "#10b981"; // green.
+  if(ms<160) return "#f59e0b"; // amber.
+  return "#ef4444"; // red.
 }
 
 /***

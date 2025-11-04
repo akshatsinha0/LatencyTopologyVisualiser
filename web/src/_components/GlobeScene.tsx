@@ -48,6 +48,10 @@ export default function GlobeScene(){
       animateIn
       rendererConfig={{ antialias:true, alpha:true }}
       arcsData={showRealtime?arcs:[]}
+      arcStartLat={(d:unknown)=> (d as VisualArc).from.lat}
+      arcStartLng={(d:unknown)=> (d as VisualArc).from.lon}
+      arcEndLat={(d:unknown)=> (d as VisualArc).to.lat}
+      arcEndLng={(d:unknown)=> (d as VisualArc).to.lon}
       arcColor={(d:unknown)=> (d as VisualArc).arcColor?.()}
       arcAltitude={(d:unknown)=> (d as VisualArc).arcAltitude?.()}
       arcDashLength={(d:unknown)=> (d as VisualArc).arcDashLength}
