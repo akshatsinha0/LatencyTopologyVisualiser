@@ -18,6 +18,8 @@ export type AppState={
   history:Record<string, Sample[]>;
   selectedArcId?:string;
   focus?:{lat:number; lon:number};
+  maxLatency:number;
+  lastUpdated?:number;
   timer?:ReturnType<typeof setInterval>;
   setProviders:(p:Set<CloudProvider>)=>void;
   toggleRegions:()=>void;
@@ -27,6 +29,7 @@ export type AppState={
   stopMock:()=>void;
   setSelectedArc:(id?:string)=>void;
   setFocus:(lat:number, lon:number)=>void;
+  setMaxLatency:(v:number)=>void;
 };
 
 /***
@@ -41,6 +44,7 @@ export const useAppStore=create<AppState>((set,get)=>({
   showHistorical:false,
   arcs:buildExchangeToRegionArcs(),
   history:{},
+  maxLatency:300,
   setProviders:(p)=>set({providers:new Set(p)}),
   toggleRegions:()=>set(s=>({showRegions:!s.showRegions})),
   toggleRealtime:()=>set(s=>({showRealtime:!s.showRealtime})),
@@ -55,7 +59,7 @@ export const useAppStore=create<AppState>((set,get)=>({
       const arr=[...(nextHist[a.id]??[]), {t:now, ms:a.latencyMs}];
       nextHist[a.id]=arr.slice(-300);
     }
-    set({arcs, history:nextHist});
+    set({arcs, history:nextHist, lastUpdated:now});
     if(get().timer) return;
     const timer=setInterval(()=>{
       const newArcs=buildExchangeToRegionArcs();
@@ -66,7 +70,7 @@ export const useAppStore=create<AppState>((set,get)=>({
         const arr=[...(nh[a.id]??[]), {t:nnow, ms:a.latencyMs}];
         nh[a.id]=arr.slice(-300);
       }
-      set({arcs:newArcs, history:nh});
+      set({arcs:newArcs, history:nh, lastUpdated:nnow});
     },10_000);
     set({timer});
   },
@@ -76,6 +80,7 @@ export const useAppStore=create<AppState>((set,get)=>({
   },
   setSelectedArc:(id)=>set({selectedArcId:id}),
   setFocus:(lat,lon)=>set({focus:{lat,lon}}),
+  setMaxLatency:(v)=>set({maxLatency:v}),
 }));
 
 /***
@@ -86,6 +91,7 @@ export const useAppStore=create<AppState>((set,get)=>({
 export function useVisualArcs():VisualArc[]{
   return useAppStore(s=>s.arcs
     .filter(a=>s.providers.has(a.provider))
+    .filter(a=>a.latencyMs<=s.maxLatency)
     .map(mapArcVisual));
 }
 

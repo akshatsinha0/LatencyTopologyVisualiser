@@ -14,6 +14,9 @@ const providers:["aws","gcp","azure"]= ["aws","gcp","azure"];
 export default function ControlPanel(){
   const s=useAppStore();
   const counts=useMemo(()=>({ arcs:s.arcs.length, providers:s.providers.size }),[s.arcs.length,s.providers.size]);
+  const metrics=useMemo(()=>{
+    const ms=s.arcs.map(a=>a.latencyMs); const avg=ms.length?Math.round(ms.reduce((a,b)=>a+b,0)/ms.length):0; return { avg, last:s.lastUpdated };
+  },[s.arcs,s.lastUpdated]);
 
   function onSearch(q:string){
     const needle=q.trim().toLowerCase(); if(!needle) return;
@@ -51,6 +54,12 @@ export default function ControlPanel(){
         </div>
       </section>
 
+      <section>
+        <label className="text-sm font-semibold mb-1 block">Latency threshold.</label>
+        <input type="range" min={20} max={300} step={10} value={s.maxLatency} onChange={(e)=>s.setMaxLatency(parseInt(e.target.value))} className="w-full" />
+        <div className="text-xs text-[var(--muted)]">Max latency: {s.maxLatency} ms.</div>
+      </section>
+
       <section className="grid grid-cols-2 gap-3">
         <label className="inline-flex items-center gap-2 text-sm">
           <input type="checkbox" checked={s.showRegions} onChange={s.toggleRegions} /> Regions.
@@ -71,6 +80,8 @@ export default function ControlPanel(){
       <section className="text-xs text-[var(--muted)]">
         <div>Arcs: {counts.arcs}.</div>
         <div>Providers active: {counts.providers}.</div>
+        <div>Avg latency: {metrics.avg} ms.</div>
+        <div>Last update: {metrics.last? new Date(metrics.last).toLocaleTimeString():"-"}.</div>
       </section>
 
       <LatencyChart />
