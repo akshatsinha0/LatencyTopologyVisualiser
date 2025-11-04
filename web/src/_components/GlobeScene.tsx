@@ -5,23 +5,20 @@
 ***/
 "use client";
 
-import Globe from "react-globe.gl";
-import { useEffect, useMemo, useRef, useState } from "react";
+import Globe, { type GlobeMethods } from "react-globe.gl";
+import { useEffect, useMemo, useRef } from "react";
 import { useAppStore, useVisualArcs, exchanges, cloudRegions } from "@/_state/store";
 import { providerColor } from "@/_lib/ui";
+import type { VisualArc } from "@/_lib/latency";
+
+type Label={ lat:number; lng:number; label:string; color:string; size:number };
 
 export default function GlobeScene(){
-  const globeRef=useRef<any>(null);
+  const globeRef=useRef<GlobeMethods | null>(null);
   const arcs=useVisualArcs();
   const { showRegions, showRealtime, regenMock }=useAppStore(s=>({showRegions:s.showRegions, showRealtime:s.showRealtime, regenMock:s.regenMock}));
 
   useEffect(()=>{ regenMock(); },[regenMock]);
-
-  const [dpr,setDpr]=useState(1.5);
-  useEffect(()=>{
-    const mq=window.matchMedia("(max-width: 640px)");
-    setDpr(mq.matches?1:1.5);
-  },[]);
 
   const exchangeLabels=useMemo(()=>exchanges.map(x=>({
     lat:x.lat, lng:x.lon, label:`${x.name} (${x.code})`, color:providerColor(x.provider), size:1.25,
@@ -41,22 +38,22 @@ export default function GlobeScene(){
       height={undefined}
       waitForGlobeReady
       animateIn
-      pixelRatio={dpr}
+      rendererConfig={{ antialias:true, alpha:true }}
       arcsData={showRealtime?arcs:[]}
-      arcColor={(d:any)=>d.arcColor?.()}
-      arcAltitude={(d:any)=>d.arcAltitude?.()}
-      arcDashLength={(d:any)=>d.arcDashLength}
-      arcDashGap={(d:any)=>d.arcDashGap}
-      arcDashAnimateTime={(d:any)=>d.arcDashAnimateTime}
+      arcColor={(d:unknown)=> (d as VisualArc).arcColor?.()}
+      arcAltitude={(d:unknown)=> (d as VisualArc).arcAltitude?.()}
+      arcDashLength={(d:unknown)=> (d as VisualArc).arcDashLength}
+      arcDashGap={(d:unknown)=> (d as VisualArc).arcDashGap}
+      arcDashAnimateTime={(d:unknown)=> (d as VisualArc).arcDashAnimateTime}
       labelsData={[...exchangeLabels, ...(showRegions?regionLabels:[])]}
-      labelText={(d:any)=>d.label}
-      labelColor={(d:any)=>d.color}
-      labelSize={(d:any)=>d.size}
+      labelText={(d:unknown)=> (d as Label).label}
+      labelColor={(d:unknown)=> (d as Label).color}
+      labelSize={(d:unknown)=> (d as Label).size}
       labelDotRadius={0.3}
       atmosphereColor="rgba(34,211,238,0.6)"
       atmosphereAltitude={0.2}
       onGlobeReady={()=>{
-        try{globeRef.current.pointOfView({lat:20, lng:10, altitude:2.5}, 1500);}catch{}
+        try{globeRef.current?.pointOfView({lat:20, lng:10, altitude:2.5}, 1500);}catch{}
       }}
     />
   );

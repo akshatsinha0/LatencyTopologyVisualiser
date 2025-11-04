@@ -4,7 +4,7 @@
  * (iii.) Mock generator updates latency values on an interval.
  */
 import { create } from "zustand";
-import { buildExchangeToRegionArcs, mapArcVisual, type ArcDatum } from "@/_lib/latency";
+import { buildExchangeToRegionArcs, mapArcVisual, type ArcDatum, type VisualArc } from "@/_lib/latency";
 import { exchanges, cloudRegions, type CloudProvider } from "@/_data/datasets";
 
 export type AppState={
@@ -57,7 +57,7 @@ export const useAppStore=create<AppState>((set,get)=>({
  * (2) Applies provider filter to arcs and returns visualized objects.
  * (3) Returns arcs mapped with color and altitude functions.
 ***/
-export function useVisualArcs(){
+export function useVisualArcs():VisualArc[]{
   return useAppStore(s=>s.arcs
     .filter(a=>s.providers.has(a.provider))
     .map(mapArcVisual));

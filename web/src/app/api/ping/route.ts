@@ -14,7 +14,7 @@ const GP_BASE="https://api.globalping.io/v1";
 ***/
 export async function POST(req:NextRequest){
   try{
-    const { host }=await req.json();
+    const { host }=await req.json() as { host?:string };
     if(!host || typeof host!=="string") return Response.json({error:"host required."},{status:400});
 
     const createRes=await fetch(`${GP_BASE}/measurements`,{
@@ -30,25 +30,25 @@ export async function POST(req:NextRequest){
       cache:"no-store",
     });
     if(!createRes.ok) throw new Error(`create ${createRes.status}`);
-    const createBody:any=await createRes.json();
-    const id=createBody?.id ?? createBody?._id ?? createBody?.measurementId;
+    const createBody=await createRes.json() as { id?:string; _id?:string; measurementId?:string };
+    const id=createBody.id ?? createBody._id ?? createBody.measurementId;
     if(!id) throw new Error("no id");
 
     const deadline=Date.now()+10_000;
-    let result:any=null;
+    let result:unknown=null;
     while(Date.now()<deadline){
       await new Promise(r=>setTimeout(r,1000));
       const r=await fetch(`${GP_BASE}/measurements/${id}`);
       if(!r.ok) continue;
-      const data:any=await r.json();
-      const all=data?.results || data?.tasks || data?.outputs;
+      const data=await r.json() as { results?: unknown[]; tasks?: unknown[]; outputs?: unknown[] };
+      const all=data.results ?? data.tasks ?? data.outputs;
       if(Array.isArray(all) && all.length>0){ result=data; break; }
     }
     if(!result) throw new Error("timeout");
 
     const stats=extractPingStats(result);
     return Response.json({ id, host, ...stats });
-  }catch(e){
+  }catch{
     // Fallback mock values for demo stability.
     return Response.json({ host:"mock", min:28, avg:42, max:95, median:40, packets:{sent:5, received:5} },{status:200});
   }
@@ -59,11 +59,15 @@ export async function POST(req:NextRequest){
  * Tries common fields used by Globalping responses.
  * Returns min/avg/max/median and packet counters.
 ***/
-function extractPingStats(payload:any){
-  const buckets:any[]=(payload?.results||payload?.tasks||[]).flatMap((t:any)=>t?.result?.rawOutput||t?.result?.stats||[]);
+function extractPingStats(payload:unknown){
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const buckets:any[]=(payload as any)?.results || (payload as any)?.tasks || [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const flat:any[]=(Array.isArray(buckets)?buckets:[]).flatMap((t:any)=>t?.result?.rawOutput||t?.result?.stats||[]);
   const samples:number[]=[];
-  for(const b of buckets){
-    const ms=b?.avg ?? b?.avgRtt ?? b?.time ?? b?.rtt;
+  for(const b of flat){
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const ms=(b as any)?.avg ?? (b as any)?.avgRtt ?? (b as any)?.time ?? (b as any)?.rtt;
     if(typeof ms==="number") samples.push(ms);
   }
   if(samples.length===0) samples.push(40,45,50);

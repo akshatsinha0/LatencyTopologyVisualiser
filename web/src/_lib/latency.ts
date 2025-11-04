@@ -14,6 +14,14 @@ export type ArcDatum={
   latencyMs:number;
 };
 
+export type VisualArc = ArcDatum & {
+  arcColor:()=>[string,string];
+  arcAltitude:()=>number;
+  arcDashLength:number;
+  arcDashGap:number;
+  arcDashAnimateTime:number;
+};
+
 /***
  * Find a cloud region by provider and region code.
  * Falls back to nearest region of that provider if exact code is not found.
@@ -52,7 +60,7 @@ export function buildExchangeToRegionArcs(list:ExchangeSite[]=exchanges):ArcDatu
  * Encodes color and altitude while preserving endpoints.
  * Returns structure consumed by react-globe.gl.
 ***/
-export function mapArcVisual(a:ArcDatum){
+export function mapArcVisual(a:ArcDatum):VisualArc{
   return {
     ...a,
     arcColor:()=>[colorForLatency(a.latencyMs), colorForLatency(a.latencyMs)],
