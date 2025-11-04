@@ -14,7 +14,7 @@ import type { VisualArc } from "@/_lib/latency";
 type Label={ lat:number; lng:number; label:string; color:string; size:number };
 
 export default function GlobeScene(){
-  const globeRef=useRef<GlobeMethods | null>(null);
+  const globeRef=useRef<GlobeMethods | undefined>(undefined);
   const arcs=useVisualArcs();
   const { showRegions, showRealtime, regenMock }=useAppStore(s=>({showRegions:s.showRegions, showRealtime:s.showRealtime, regenMock:s.regenMock}));
 

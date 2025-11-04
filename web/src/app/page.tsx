@@ -3,6 +3,7 @@
  * Hosts the 3D globe canvas and the control side panel for filters and layers.
  * Composes feature components and wires initial store hydration.
 ***/
+"use client";
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import "./globals.css";
