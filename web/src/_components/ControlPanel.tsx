@@ -75,6 +75,16 @@ export default function ControlPanel(){
       <section className="flex gap-3">
         <button className="px-3 py-2 rounded bg-[var(--accent)] text-black text-sm" onClick={()=>{s.regenMock(); s.probeReal();}}>Start realtime.</button>
         <button className="px-3 py-2 rounded border border-white/10 text-sm" onClick={s.stopMock}>Stop.</button>
+        <button className="px-3 py-2 rounded border border-white/10 text-sm" onClick={()=>{
+          const payload={
+            at:new Date().toISOString(),
+            providers:Array.from(s.providers),
+            arcs:s.arcs,
+            metrics:{ avg: s.arcs.length?Math.round(s.arcs.map(a=>a.latencyMs).reduce((a,b)=>a+b,0)/s.arcs.length):0 }
+          };
+          const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+          const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`latency-report-${Date.now()}.json`; a.click(); URL.revokeObjectURL(url);
+        }}>Export report.</button>
       </section>
 
       <section className="text-xs text-[var(--muted)]">
