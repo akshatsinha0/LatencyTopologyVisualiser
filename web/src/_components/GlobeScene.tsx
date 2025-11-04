@@ -16,20 +16,20 @@ type Label={ lat:number; lng:number; label:string; color:string; size:number };
 export default function GlobeScene(){
   const globeRef=useRef<GlobeMethods | undefined>(undefined);
   const arcs=useVisualArcs();
-  const { showRegions, showRealtime, regenMock, setSelectedArc, focus }=useAppStore(s=>({showRegions:s.showRegions, showRealtime:s.showRealtime, regenMock:s.regenMock, setSelectedArc:s.setSelectedArc, focus:s.focus}));
+  const { showRegions, showRealtime, regenMock, setSelectedArc, focus, providers }=useAppStore(s=>({showRegions:s.showRegions, showRealtime:s.showRealtime, regenMock:s.regenMock, setSelectedArc:s.setSelectedArc, focus:s.focus, providers:s.providers}));
 
   useEffect(()=>{ regenMock(); },[regenMock]);
   useEffect(()=>{
     if(!focus) return; try{globeRef.current?.pointOfView({lat:focus.lat, lng:focus.lon, altitude:1.8}, 1000);}catch{}
   },[focus]);
 
-  const exchangeLabels=useMemo(()=>exchanges.map(x=>({
-    lat:x.lat, lng:x.lon, label:`${x.name} (${x.code})`, color:providerColor(x.provider), size:1.25,
-  })),[]);
+  const exchangeLabels=useMemo(()=>exchanges
+    .filter(x=>providers.has(x.provider))
+    .map(x=>({ lat:x.lat, lng:x.lon, label:`${x.name} (${x.code})`, color:providerColor(x.provider), size:1.25 })),[providers]);
 
-  const regionLabels=useMemo(()=>cloudRegions.map(r=>({
-    lat:r.lat, lng:r.lon, label:`${r.provider.toUpperCase()} ${r.code}`, color:providerColor(r.provider), size:1,
-  })),[]);
+  const regionLabels=useMemo(()=>cloudRegions
+    .filter(r=>providers.has(r.provider))
+    .map(r=>({ lat:r.lat, lng:r.lon, label:`${r.provider.toUpperCase()} ${r.code}`, color:providerColor(r.provider), size:1 })),[providers]);
 
   return (
     <Globe
@@ -55,6 +55,11 @@ export default function GlobeScene(){
       labelDotRadius={0.3}
       atmosphereColor="rgba(34,211,238,0.6)"
       atmosphereAltitude={0.2}
+      ringsData={showRegions?regionLabels:[]}
+      ringColor={(d:unknown)=> (d as Label).color}
+      ringMaxRadius={2}
+      ringPropagationSpeed={1.5}
+      ringRepeatPeriod={1200}
       onGlobeReady={()=>{
         try{globeRef.current?.pointOfView({lat:20, lng:10, altitude:2.5}, 1500);}catch{}
       }}
