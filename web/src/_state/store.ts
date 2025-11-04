@@ -14,23 +14,29 @@ export type AppState={
   showRegions:boolean;
   showRealtime:boolean;
   showHistorical:boolean;
+  showHeatmap:boolean;
   arcs:ArcDatum[];
   history:Record<string, Sample[]>;
   selectedArcId?:string;
+  selectedMarker?:{ kind:"exchange"|"region"; id:string };
   focus?:{lat:number; lon:number};
   maxLatency:number;
   lastUpdated?:number;
+  exchangesEnabled:Set<string>;
   timer?:ReturnType<typeof setInterval>;
   setProviders:(p:Set<CloudProvider>)=>void;
   toggleRegions:()=>void;
   toggleRealtime:()=>void;
   toggleHistorical:()=>void;
+  toggleHeatmap:()=>void;
   regenMock:()=>void;
   stopMock:()=>void;
   probeReal:()=>void;
   setSelectedArc:(id?:string)=>void;
+  setSelectedMarker:(m?:{kind:"exchange"|"region"; id:string})=>void;
   setFocus:(lat:number, lon:number)=>void;
   setMaxLatency:(v:number)=>void;
+  setExchangesEnabled:(ids:Set<string>)=>void;
 };
 
 /***
@@ -43,13 +49,16 @@ export const useAppStore=create<AppState>((set,get)=>({
   showRegions:true,
   showRealtime:true,
   showHistorical:false,
+  showHeatmap:false,
   arcs:buildExchangeToRegionArcs(),
   history:{},
+  exchangesEnabled:new Set<string>(),
   maxLatency:300,
   setProviders:(p)=>set({providers:new Set(p)}),
   toggleRegions:()=>set(s=>({showRegions:!s.showRegions})),
   toggleRealtime:()=>set(s=>({showRealtime:!s.showRealtime})),
   toggleHistorical:()=>set(s=>({showHistorical:!s.showHistorical})),
+  toggleHeatmap:()=>set(s=>({showHeatmap:!s.showHeatmap})),
   regenMock:()=>{
     const arcs=buildExchangeToRegionArcs();
     // update history with latest snapshot samples.
@@ -101,8 +110,10 @@ export const useAppStore=create<AppState>((set,get)=>({
     }catch{}
   },
   setSelectedArc:(id)=>set({selectedArcId:id}),
+  setSelectedMarker:(m)=>set({selectedMarker:m}),
   setFocus:(lat,lon)=>set({focus:{lat,lon}}),
   setMaxLatency:(v)=>set({maxLatency:v}),
+  setExchangesEnabled:(ids)=>set({exchangesEnabled:new Set(ids)}),
 }));
 
 /***
@@ -116,11 +127,14 @@ export function useVisualArcs():VisualArc[]{
   const arcs=useAppStore(s=>s.arcs);
   const providers=useAppStore(s=>s.providers);
   const maxLatency=useAppStore(s=>s.maxLatency);
-  return useMemo(()=>
-    arcs.filter(a=>providers.has(a.provider))
+  const enabled=useAppStore(s=>s.exchangesEnabled);
+  return useMemo(()=>{
+    const enabledIds = enabled.size? enabled : new Set(arcs.map(a=>a.id.split("__")[0]));
+    return arcs.filter(a=>providers.has(a.provider))
+        .filter(a=>enabledIds.has(a.id.split("__")[0]))
         .filter(a=>a.latencyMs<=maxLatency)
-        .map(mapArcVisual)
-  ,[arcs,providers,maxLatency]);
+        .map(mapArcVisual);
+  },[arcs,providers,maxLatency,enabled]);
 }
 
 /***

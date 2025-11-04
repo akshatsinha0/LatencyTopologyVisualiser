@@ -12,6 +12,7 @@ export type ArcDatum={
   to:{lat:number;lon:number; label:string};
   provider:CloudProvider;
   latencyMs:number;
+  volume?:number;
 };
 
 export type VisualArc = ArcDatum & {
@@ -45,12 +46,14 @@ export function buildExchangeToRegionArcs(list:ExchangeSite[]=exchanges):ArcDatu
     const region=resolveRegion(x.provider,x.regionCode);
     const km=haversineKm({lat:x.lat,lon:x.lon},{lat:region.lat,lon:region.lon});
     const latency=approxRttMs(km);
+    const volume=Math.max(1, Math.round(1000/km)); // pseudo inverse-distance signal.
     return {
       id:`${x.id}__${region.provider}-${region.code}`,
       from:{lat:x.lat,lon:x.lon,label:`${x.name} (${x.code})`},
       to:{lat:region.lat,lon:region.lon,label:`${region.provider.toUpperCase()} ${region.code}`},
       provider:x.provider,
       latencyMs:latency,
+      volume,
     } satisfies ArcDatum;
   });
 }
@@ -69,6 +72,21 @@ export function mapArcVisual(a:ArcDatum):VisualArc{
     arcDashGap:0.2,
     arcDashAnimateTime:Math.max(1500, a.latencyMs*12),
   };
+}
+
+/***
+ * Build hex-bin point inputs from arcs to show latency heat.
+ * Each arc contributes endpoints with weight inverse to latency.
+ * Returns a list of points with lat, lng, weight fields.
+***/
+export function hexPointsFromArcs(arcs:ArcDatum[]){
+  return arcs.flatMap(a=>{
+    const w=Math.max(1, 200 - a.latencyMs);
+    return [
+      { lat:a.from.lat, lng:a.from.lon, weight:w },
+      { lat:a.to.lat,   lng:a.to.lon,   weight:w },
+    ];
+  });
 }
 
 /***

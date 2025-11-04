@@ -8,8 +8,11 @@ import { useMemo } from "react";
 import { useAppStore } from "@/_state/store";
 import LatencyChart from "@/_components/LatencyChart";
 import { exchanges, cloudRegions } from "@/_state/store";
+import { useFps } from "@/_lib/perf";
+import ThemeToggle from "@/_components/ThemeToggle";
 
 const providers:["aws","gcp","azure"]= ["aws","gcp","azure"];
+import { exchanges as allExchanges } from "@/_state/store";
 
 export default function ControlPanel(){
   const s=useAppStore();
@@ -17,6 +20,7 @@ export default function ControlPanel(){
   const metrics=useMemo(()=>{
     const ms=s.arcs.map(a=>a.latencyMs); const avg=ms.length?Math.round(ms.reduce((a,b)=>a+b,0)/ms.length):0; return { avg, last:s.lastUpdated };
   },[s.arcs,s.lastUpdated]);
+  const fps = useFps();
 
   function onSearch(q:string){
     const needle=q.trim().toLowerCase(); if(!needle) return;
@@ -60,6 +64,26 @@ export default function ControlPanel(){
         <div className="text-xs text-[var(--muted)]">Max latency: {s.maxLatency} ms.</div>
       </section>
 
+      <section>
+        <h2 className="text-sm font-semibold mb-2">Exchanges.</h2>
+        <div className="grid grid-cols-2 gap-2 max-h-32 overflow-auto pr-1">
+          {allExchanges.map(x=>{
+            const checked = s.exchangesEnabled.size? s.exchangesEnabled.has(x.id): true;
+            return (
+              <label key={x.id} className="inline-flex items-center gap-2 text-xs">
+                <input type="checkbox" checked={checked} onChange={(e)=>{
+                  const next=new Set(s.exchangesEnabled);
+                  if(next.size===0){ allExchanges.forEach(ex=>next.add(ex.id)); }
+                  if(e.target.checked) next.add(x.id); else next.delete(x.id);
+                  s.setExchangesEnabled(next);
+                }} />
+                <span>{x.name}</span>
+              </label>
+            );
+          })}
+        </div>
+      </section>
+
       <section className="grid grid-cols-2 gap-3">
         <label className="inline-flex items-center gap-2 text-sm">
           <input type="checkbox" checked={s.showRegions} onChange={s.toggleRegions} /> Regions.
@@ -69,6 +93,9 @@ export default function ControlPanel(){
         </label>
         <label className="inline-flex items-center gap-2 text-sm">
           <input type="checkbox" checked={s.showHistorical} onChange={s.toggleHistorical} /> Historical.
+        </label>
+        <label className="inline-flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={s.showHeatmap} onChange={s.toggleHeatmap} /> Heatmap.
         </label>
       </section>
 
@@ -85,6 +112,7 @@ export default function ControlPanel(){
           const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
           const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`latency-report-${Date.now()}.json`; a.click(); URL.revokeObjectURL(url);
         }}>Export report.</button>
+        <ThemeToggle />
       </section>
 
       <section className="text-xs text-[var(--muted)]">
@@ -92,6 +120,7 @@ export default function ControlPanel(){
         <div>Providers active: {counts.providers}.</div>
         <div>Avg latency: {metrics.avg} ms.</div>
         <div>Last update: {metrics.last? new Date(metrics.last).toLocaleTimeString():"-"}.</div>
+        <div>FPS: {fps}.</div>
       </section>
 
       <LatencyChart />
