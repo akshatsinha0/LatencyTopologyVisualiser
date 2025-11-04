@@ -63,6 +63,7 @@ export default function GlobeScene(){
       arcDashLength={(d:unknown)=> (d as VisualArc).arcDashLength}
       arcDashGap={(d:unknown)=> (d as VisualArc).arcDashGap}
       arcDashAnimateTime={(d:unknown)=> (d as VisualArc).arcDashAnimateTime}
+      arcStroke={(d:unknown)=> Math.max(0.5, Math.min(2, ((d as VisualArc).volume ?? 1)/300))}
       hexBinPointsData={showHeatmap? hexPoints: []}
       hexBinPointLat={(p:unknown)=> (p as {lat:number}).lat}
       hexBinPointLng={(p:unknown)=> (p as {lng:number}).lng}

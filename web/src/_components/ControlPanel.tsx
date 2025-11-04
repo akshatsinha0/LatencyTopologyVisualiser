@@ -10,6 +10,7 @@ import LatencyChart from "@/_components/LatencyChart";
 import { exchanges, cloudRegions } from "@/_state/store";
 import { useFps } from "@/_lib/perf";
 import ThemeToggle from "@/_components/ThemeToggle";
+import RegionSummary from "@/_components/RegionSummary";
 
 const providers:["aws","gcp","azure"]= ["aws","gcp","azure"];
 import { exchanges as allExchanges } from "@/_state/store";
@@ -99,7 +100,7 @@ export default function ControlPanel(){
         </label>
       </section>
 
-      <section className="flex gap-3">
+      <section className="flex flex-wrap gap-3">
         <button className="px-3 py-2 rounded bg-[var(--accent)] text-black text-sm" onClick={()=>{s.regenMock(); s.probeReal();}}>Start realtime.</button>
         <button className="px-3 py-2 rounded border border-white/10 text-sm" onClick={s.stopMock}>Stop.</button>
         <button className="px-3 py-2 rounded border border-white/10 text-sm" onClick={()=>{
@@ -112,6 +113,11 @@ export default function ControlPanel(){
           const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
           const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=`latency-report-${Date.now()}.json`; a.click(); URL.revokeObjectURL(url);
         }}>Export report.</button>
+        <button className="px-3 py-2 rounded border border-white/10 text-sm" onClick={()=>{
+          const canvas=document.querySelector('canvas'); if(!canvas) return;
+          const url=(canvas as HTMLCanvasElement).toDataURL('image/png');
+          const a=document.createElement('a'); a.href=url; a.download=`latency-visual-${Date.now()}.png`; a.click();
+        }}>Export image.</button>
         <ThemeToggle />
       </section>
 
@@ -122,6 +128,8 @@ export default function ControlPanel(){
         <div>Last update: {metrics.last? new Date(metrics.last).toLocaleTimeString():"-"}.</div>
         <div>FPS: {fps}.</div>
       </section>
+
+      <RegionSummary />
 
       <LatencyChart />
     </div>
