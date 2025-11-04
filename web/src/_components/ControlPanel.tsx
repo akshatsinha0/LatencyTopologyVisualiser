@@ -73,7 +73,7 @@ export default function ControlPanel(){
       </section>
 
       <section className="flex gap-3">
-        <button className="px-3 py-2 rounded bg-[var(--accent)] text-black text-sm" onClick={s.regenMock}>Start realtime.</button>
+        <button className="px-3 py-2 rounded bg-[var(--accent)] text-black text-sm" onClick={()=>{s.regenMock(); s.probeReal();}}>Start realtime.</button>
         <button className="px-3 py-2 rounded border border-white/10 text-sm" onClick={s.stopMock}>Stop.</button>
       </section>
 

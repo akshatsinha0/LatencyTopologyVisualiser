@@ -27,6 +27,7 @@ export type AppState={
   toggleHistorical:()=>void;
   regenMock:()=>void;
   stopMock:()=>void;
+  probeReal:()=>void;
   setSelectedArc:(id?:string)=>void;
   setFocus:(lat:number, lon:number)=>void;
   setMaxLatency:(v:number)=>void;
@@ -77,6 +78,27 @@ export const useAppStore=create<AppState>((set,get)=>({
   stopMock:()=>{
     const t=get().timer; if(t) clearInterval(t);
     set({timer:undefined});
+  },
+  probeReal:async()=>{
+    // Fire a round of Globalping probes and merge medians into arcs.
+    try{
+      const tasks=exchanges.slice(0,4).map(async x=>{
+        const res=await fetch(`/api/ping`,{method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({host:x.host})});
+        const data=await res.json() as { median?:number };
+        return { id:x.id, median:data.median };
+      });
+      const results=await Promise.all(tasks);
+      const map=new Map(results.filter(r=>typeof r.median==='number').map(r=>[r.id!, r.median!] as const));
+      if(map.size===0) return;
+      const updated=get().arcs.map(a=> map.has(a.id.split('__')[0]) ? { ...a, latencyMs: map.get(a.id.split('__')[0])! } : a );
+      const now=Date.now();
+      const ph=get().history; const nh:Record<string, Sample[]>={...ph};
+      for(const a of updated){
+        const arr=[...(nh[a.id]??[]), {t:now, ms:a.latencyMs}];
+        nh[a.id]=arr.slice(-300);
+      }
+      set({ arcs:updated, history:nh, lastUpdated:now });
+    }catch{}
   },
   setSelectedArc:(id)=>set({selectedArcId:id}),
   setFocus:(lat,lon)=>set({focus:{lat,lon}}),
