@@ -129,12 +129,15 @@ export function useVisualArcs():VisualArc[]{
  * Returns an ordered array of samples within the window.
 ***/
 export function useArcHistory(id?:string, rangeMs=60*60*1000){
-  return useAppStore(s=>{
+  const history=useAppStore(s=>s.history);
+  const lastUpdated=useAppStore(s=>s.lastUpdated);
+  return useMemo(()=>{
     if(!id) return [] as Sample[];
-    const now=Date.now();
-    const arr=s.history[id]??[];
+    const arr=history[id]??[];
+    const now= lastUpdated ?? (arr.length? arr[arr.length-1].t : 0);
+    if(!now) return arr;
     return arr.filter(pt=>pt.t>=now-rangeMs);
-  });
+  },[history, id, rangeMs, lastUpdated]);
 }
 
 export { exchanges, cloudRegions };
