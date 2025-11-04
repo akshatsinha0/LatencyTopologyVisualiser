@@ -16,7 +16,12 @@ type Label={ lat:number; lng:number; label:string; color:string; size:number };
 export default function GlobeScene(){
   const globeRef=useRef<GlobeMethods | undefined>(undefined);
   const arcs=useVisualArcs();
-  const { showRegions, showRealtime, regenMock, setSelectedArc, focus, providers }=useAppStore(s=>({showRegions:s.showRegions, showRealtime:s.showRealtime, regenMock:s.regenMock, setSelectedArc:s.setSelectedArc, focus:s.focus, providers:s.providers}));
+  const showRegions=useAppStore(s=>s.showRegions);
+  const showRealtime=useAppStore(s=>s.showRealtime);
+  const regenMock=useAppStore(s=>s.regenMock);
+  const setSelectedArc=useAppStore(s=>s.setSelectedArc);
+  const focus=useAppStore(s=>s.focus);
+  const providers=useAppStore(s=>s.providers);
 
   useEffect(()=>{ regenMock(); },[regenMock]);
   useEffect(()=>{

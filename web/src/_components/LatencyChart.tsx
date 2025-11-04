@@ -13,7 +13,7 @@ const ranges:[label:string,value:number][]=[
 ];
 
 export default function LatencyChart(){
-  const { selectedArcId }=useAppStore(s=>({selectedArcId:s.selectedArcId}));
+  const selectedArcId=useAppStore(s=>s.selectedArcId);
   const [range,setRange]=useState(ranges[0][1]);
   const samples=useArcHistory(selectedArcId, range);
 

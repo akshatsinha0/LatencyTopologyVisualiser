@@ -110,11 +110,17 @@ export const useAppStore=create<AppState>((set,get)=>({
  * (2) Applies provider filter to arcs and returns visualized objects.
  * (3) Returns arcs mapped with color and altitude functions.
 ***/
+import { useMemo } from "react";
+
 export function useVisualArcs():VisualArc[]{
-  return useAppStore(s=>s.arcs
-    .filter(a=>s.providers.has(a.provider))
-    .filter(a=>a.latencyMs<=s.maxLatency)
-    .map(mapArcVisual));
+  const arcs=useAppStore(s=>s.arcs);
+  const providers=useAppStore(s=>s.providers);
+  const maxLatency=useAppStore(s=>s.maxLatency);
+  return useMemo(()=>
+    arcs.filter(a=>providers.has(a.provider))
+        .filter(a=>a.latencyMs<=maxLatency)
+        .map(mapArcVisual)
+  ,[arcs,providers,maxLatency]);
 }
 
 /***
