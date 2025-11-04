@@ -7,12 +7,16 @@ import { create } from "zustand";
 import { buildExchangeToRegionArcs, mapArcVisual, type ArcDatum, type VisualArc } from "@/_lib/latency";
 import { exchanges, cloudRegions, type CloudProvider } from "@/_data/datasets";
 
+export type Sample={ t:number; ms:number };
+
 export type AppState={
   providers:Set<CloudProvider>;
   showRegions:boolean;
   showRealtime:boolean;
   showHistorical:boolean;
   arcs:ArcDatum[];
+  history:Record<string, Sample[]>;
+  selectedArcId?:string;
   timer?:ReturnType<typeof setInterval>;
   setProviders:(p:Set<CloudProvider>)=>void;
   toggleRegions:()=>void;
@@ -20,6 +24,7 @@ export type AppState={
   toggleHistorical:()=>void;
   regenMock:()=>void;
   stopMock:()=>void;
+  setSelectedArc:(id?:string)=>void;
 };
 
 /***
@@ -33,16 +38,33 @@ export const useAppStore=create<AppState>((set,get)=>({
   showRealtime:true,
   showHistorical:false,
   arcs:buildExchangeToRegionArcs(),
+  history:{},
   setProviders:(p)=>set({providers:new Set(p)}),
   toggleRegions:()=>set(s=>({showRegions:!s.showRegions})),
   toggleRealtime:()=>set(s=>({showRealtime:!s.showRealtime})),
   toggleHistorical:()=>set(s=>({showHistorical:!s.showHistorical})),
   regenMock:()=>{
     const arcs=buildExchangeToRegionArcs();
-    set({arcs});
+    // update history with latest snapshot samples.
+    const now=Date.now();
+    const prev=get().history;
+    const nextHist:Record<string, Sample[]>={...prev};
+    for(const a of arcs){
+      const arr=[...(nextHist[a.id]??[]), {t:now, ms:a.latencyMs}];
+      nextHist[a.id]=arr.slice(-300);
+    }
+    set({arcs, history:nextHist});
     if(get().timer) return;
     const timer=setInterval(()=>{
-      set({arcs:buildExchangeToRegionArcs()});
+      const newArcs=buildExchangeToRegionArcs();
+      const nnow=Date.now();
+      const ph=get().history;
+      const nh:Record<string, Sample[]>={...ph};
+      for(const a of newArcs){
+        const arr=[...(nh[a.id]??[]), {t:nnow, ms:a.latencyMs}];
+        nh[a.id]=arr.slice(-300);
+      }
+      set({arcs:newArcs, history:nh});
     },10_000);
     set({timer});
   },
@@ -50,6 +72,7 @@ export const useAppStore=create<AppState>((set,get)=>({
     const t=get().timer; if(t) clearInterval(t);
     set({timer:undefined});
   },
+  setSelectedArc:(id)=>set({selectedArcId:id}),
 }));
 
 /***
@@ -61,6 +84,20 @@ export function useVisualArcs():VisualArc[]{
   return useAppStore(s=>s.arcs
     .filter(a=>s.providers.has(a.provider))
     .map(mapArcVisual));
+}
+
+/***
+ * Selector to read historical samples for a given arc.
+ * Accepts an arc id and a time range in milliseconds.
+ * Returns an ordered array of samples within the window.
+***/
+export function useArcHistory(id?:string, rangeMs=60*60*1000){
+  return useAppStore(s=>{
+    if(!id) return [] as Sample[];
+    const now=Date.now();
+    const arr=s.history[id]??[];
+    return arr.filter(pt=>pt.t>=now-rangeMs);
+  });
 }
 
 export { exchanges, cloudRegions };

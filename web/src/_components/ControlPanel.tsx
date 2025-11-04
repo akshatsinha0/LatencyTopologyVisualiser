@@ -6,6 +6,7 @@
 ***/
 import { useMemo } from "react";
 import { useAppStore } from "@/_state/store";
+import LatencyChart from "@/_components/LatencyChart";
 
 const providers:["aws","gcp","azure"]= ["aws","gcp","azure"];
 
@@ -53,6 +54,8 @@ export default function ControlPanel(){
         <div>Arcs: {counts.arcs}.</div>
         <div>Providers active: {counts.providers}.</div>
       </section>
+
+      <LatencyChart />
     </div>
   );
 }

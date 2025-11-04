@@ -16,7 +16,7 @@ type Label={ lat:number; lng:number; label:string; color:string; size:number };
 export default function GlobeScene(){
   const globeRef=useRef<GlobeMethods | undefined>(undefined);
   const arcs=useVisualArcs();
-  const { showRegions, showRealtime, regenMock }=useAppStore(s=>({showRegions:s.showRegions, showRealtime:s.showRealtime, regenMock:s.regenMock}));
+  const { showRegions, showRealtime, regenMock, setSelectedArc }=useAppStore(s=>({showRegions:s.showRegions, showRealtime:s.showRealtime, regenMock:s.regenMock, setSelectedArc:s.setSelectedArc}));
 
   useEffect(()=>{ regenMock(); },[regenMock]);
 
@@ -54,6 +54,9 @@ export default function GlobeScene(){
       atmosphereAltitude={0.2}
       onGlobeReady={()=>{
         try{globeRef.current?.pointOfView({lat:20, lng:10, altitude:2.5}, 1500);}catch{}
+      }}
+      onArcClick={(a:unknown)=>{
+        const id=(a as {id?:string}).id; setSelectedArc(id);
       }}
     />
   );
