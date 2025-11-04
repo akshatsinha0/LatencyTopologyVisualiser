@@ -16,9 +16,12 @@ type Label={ lat:number; lng:number; label:string; color:string; size:number };
 export default function GlobeScene(){
   const globeRef=useRef<GlobeMethods | undefined>(undefined);
   const arcs=useVisualArcs();
-  const { showRegions, showRealtime, regenMock, setSelectedArc }=useAppStore(s=>({showRegions:s.showRegions, showRealtime:s.showRealtime, regenMock:s.regenMock, setSelectedArc:s.setSelectedArc}));
+  const { showRegions, showRealtime, regenMock, setSelectedArc, focus }=useAppStore(s=>({showRegions:s.showRegions, showRealtime:s.showRealtime, regenMock:s.regenMock, setSelectedArc:s.setSelectedArc, focus:s.focus}));
 
   useEffect(()=>{ regenMock(); },[regenMock]);
+  useEffect(()=>{
+    if(!focus) return; try{globeRef.current?.pointOfView({lat:focus.lat, lng:focus.lon, altitude:1.8}, 1000);}catch{}
+  },[focus]);
 
   const exchangeLabels=useMemo(()=>exchanges.map(x=>({
     lat:x.lat, lng:x.lon, label:`${x.name} (${x.code})`, color:providerColor(x.provider), size:1.25,

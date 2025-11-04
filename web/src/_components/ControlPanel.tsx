@@ -7,12 +7,20 @@
 import { useMemo } from "react";
 import { useAppStore } from "@/_state/store";
 import LatencyChart from "@/_components/LatencyChart";
+import { exchanges, cloudRegions } from "@/_state/store";
 
 const providers:["aws","gcp","azure"]= ["aws","gcp","azure"];
 
 export default function ControlPanel(){
   const s=useAppStore();
   const counts=useMemo(()=>({ arcs:s.arcs.length, providers:s.providers.size }),[s.arcs.length,s.providers.size]);
+
+  function onSearch(q:string){
+    const needle=q.trim().toLowerCase(); if(!needle) return;
+    const e=exchanges.find(x=>x.name.toLowerCase().includes(needle)||x.code.toLowerCase().includes(needle));
+    const r=!e? cloudRegions.find(x=>x.code.toLowerCase().includes(needle)||x.name.toLowerCase().includes(needle)):undefined;
+    if(e){ s.setFocus(e.lat,e.lon); } else if(r){ s.setFocus(r.lat,r.lon); }
+  }
 
   return (
     <div className="space-y-4">
@@ -30,6 +38,16 @@ export default function ControlPanel(){
               </label>
             );
           })}
+        </div>
+      </section>
+
+      <section>
+        <label className="text-sm font-semibold mb-1 block">Search.</label>
+        <div className="flex gap-2">
+          <input className="flex-1 px-2 py-1 rounded bg-transparent border border-white/10 text-sm" placeholder="Exchange or region code..." onKeyDown={(e)=>{ if(e.key==='Enter') onSearch((e.target as HTMLInputElement).value); }} />
+          <button className="px-2 py-1 rounded border border-white/10 text-sm" onClick={()=>{
+            const el=(document.activeElement as HTMLInputElement); onSearch(el?.value??"");
+          }}>Go.</button>
         </div>
       </section>
 

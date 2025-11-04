@@ -17,6 +17,7 @@ export type AppState={
   arcs:ArcDatum[];
   history:Record<string, Sample[]>;
   selectedArcId?:string;
+  focus?:{lat:number; lon:number};
   timer?:ReturnType<typeof setInterval>;
   setProviders:(p:Set<CloudProvider>)=>void;
   toggleRegions:()=>void;
@@ -25,6 +26,7 @@ export type AppState={
   regenMock:()=>void;
   stopMock:()=>void;
   setSelectedArc:(id?:string)=>void;
+  setFocus:(lat:number, lon:number)=>void;
 };
 
 /***
@@ -73,6 +75,7 @@ export const useAppStore=create<AppState>((set,get)=>({
     set({timer:undefined});
   },
   setSelectedArc:(id)=>set({selectedArcId:id}),
+  setFocus:(lat,lon)=>set({focus:{lat,lon}}),
 }));
 
 /***
