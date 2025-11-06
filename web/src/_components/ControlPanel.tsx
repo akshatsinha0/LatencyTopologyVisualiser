@@ -131,7 +131,7 @@ export default function ControlPanel(){
 
       <RegionSummary />
 
-      <LatencyChart />
+      {s.showHistorical ? <LatencyChart /> : <div className="text-xs text-[var(--muted)]">Select a connection to see history.</div>}
     </div>
   );
 }

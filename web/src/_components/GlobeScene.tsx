@@ -46,7 +46,7 @@ export default function GlobeScene(){
     <Globe
       ref={globeRef}
       backgroundColor={"rgba(0,0,0,0)"}
-      globeImageUrl="//unpkg.com/three-globe/example/img/earth-dark.jpg"
+      globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
       bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
       width={undefined}
       height={undefined}
@@ -77,8 +77,8 @@ export default function GlobeScene(){
       labelColor={(d:unknown)=> (d as Label).color}
       labelSize={(d:unknown)=> (d as Label).size}
       labelDotRadius={0.3}
-      atmosphereColor="rgba(34,211,238,0.6)"
-      atmosphereAltitude={0.2}
+      atmosphereColor="rgba(34,211,238,0.35)"
+      atmosphereAltitude={0.18}
       ringsData={showRegions?regionLabels:[]}
       ringColor={(d:unknown)=> (d as Label).color}
       ringMaxRadius={2}

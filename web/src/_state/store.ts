@@ -24,6 +24,7 @@ export type AppState={
   lastUpdated?:number;
   exchangesEnabled:Set<string>;
   timer?:ReturnType<typeof setInterval>;
+  probeTimer?:ReturnType<typeof setInterval>;
   setProviders:(p:Set<CloudProvider>)=>void;
   toggleRegions:()=>void;
   toggleRealtime:()=>void;
@@ -82,24 +83,36 @@ export const useAppStore=create<AppState>((set,get)=>({
       }
       set({arcs:newArcs, history:nh, lastUpdated:nnow});
     },10_000);
-    set({timer});
+    const probeTimer=setInterval(()=>{ get().probeReal(); },30_000);
+    set({timer, probeTimer});
+    // Kick an immediate real probe.
+    get().probeReal();
   },
   stopMock:()=>{
     const t=get().timer; if(t) clearInterval(t);
-    set({timer:undefined});
+    const pt=get().probeTimer; if(pt) clearInterval(pt);
+    set({timer:undefined, probeTimer:undefined});
   },
   probeReal:async()=>{
-    // Fire a round of Globalping probes and merge medians into arcs.
+    // Fire Globalping probes for enabled exchanges within provider filters and merge medians.
     try{
-      const tasks=exchanges.slice(0,4).map(async x=>{
+      const providers=get().providers; const enabled=get().exchangesEnabled;
+      const list = (enabled.size? exchanges.filter(x=>enabled.has(x.id)) : exchanges)
+        .filter(x=>providers.has(x.provider))
+        .slice(0,10); // cap to avoid rate-limits.
+
+      const results: {id:string; median?:number}[] = [];
+      for(const x of list){
         const res=await fetch(`/api/ping`,{method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({host:x.host})});
         const data=await res.json() as { median?:number };
-        return { id:x.id, median:data.median };
-      });
-      const results=await Promise.all(tasks);
+        results.push({ id:x.id, median:data.median });
+      }
       const map=new Map(results.filter(r=>typeof r.median==='number').map(r=>[r.id!, r.median!] as const));
       if(map.size===0) return;
-      const updated=get().arcs.map(a=> map.has(a.id.split('__')[0]) ? { ...a, latencyMs: map.get(a.id.split('__')[0])! } : a );
+      const updated=get().arcs.map(a=> {
+        const key=a.id.split('__')[0];
+        return map.has(key)? { ...a, latencyMs: map.get(key)! } : a;
+      });
       const now=Date.now();
       const ph=get().history; const nh:Record<string, Sample[]>={...ph};
       for(const a of updated){
