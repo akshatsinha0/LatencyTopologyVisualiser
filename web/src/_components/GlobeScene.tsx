@@ -24,6 +24,8 @@ export default function GlobeScene(){
   const focus=useAppStore(s=>s.focus);
   const providers=useAppStore(s=>s.providers);
   const showHeatmap=useAppStore(s=>s.showHeatmap);
+  const showLabels=useAppStore(s=>s.showLabels);
+  const autoRotate=useAppStore(s=>s.autoRotate);
 
   useEffect(()=>{ regenMock(); },[regenMock]);
   useEffect(()=>{
@@ -31,6 +33,11 @@ export default function GlobeScene(){
   },[focus]);
 
   const enabled=useAppStore(s=>s.exchangesEnabled);
+  useEffect(()=>{
+    try{
+      const c=globeRef.current?.controls?.(); if(c){ c.autoRotate=autoRotate; c.autoRotateSpeed=0.45; }
+    }catch{}
+  },[autoRotate]);
   const exchangeLabels=useMemo(()=>exchanges
     .filter(x=>providers.has(x.provider))
     .filter(x=> enabled.size? enabled.has(x.id): true)
@@ -72,7 +79,7 @@ export default function GlobeScene(){
       hexTopColor={()=>"#22d3ee"}
       hexSideColor={()=>"#155e75"}
       hexAltitude={(d:unknown)=> Math.min(0.25, ((d as { sumWeight?:number }).sumWeight ?? 50)/400)}
-      labelsData={[...exchangeLabels, ...(showRegions?regionLabels:[])]}
+      labelsData={showLabels? [...exchangeLabels, ...(showRegions?regionLabels:[])]: []}
       labelText={(d:unknown)=> (d as Label).label}
       labelColor={(d:unknown)=> (d as Label).color}
       labelSize={(d:unknown)=> (d as Label).size}

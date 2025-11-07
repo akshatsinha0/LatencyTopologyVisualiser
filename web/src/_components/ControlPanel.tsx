@@ -98,11 +98,18 @@ export default function ControlPanel(){
         <label className="inline-flex items-center gap-2 text-sm">
           <input type="checkbox" checked={s.showHeatmap} onChange={s.toggleHeatmap} /> Heatmap.
         </label>
+        <label className="inline-flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={s.showLabels} onChange={s.toggleLabels} /> Labels.
+        </label>
+        <label className="inline-flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={s.autoRotate} onChange={s.toggleAutoRotate} /> Auto-rotate.
+        </label>
       </section>
 
       <section className="flex flex-wrap gap-3">
         <button className="px-3 py-2 rounded bg-[var(--accent)] text-black text-sm" onClick={()=>{s.regenMock(); s.probeReal();}}>Start realtime.</button>
         <button className="px-3 py-2 rounded border border-white/10 text-sm" onClick={s.stopMock}>Stop.</button>
+        <button className="px-3 py-2 rounded border border-white/10 text-sm" onClick={()=>s.setFocus(20,10)}>Reset camera.</button>
         <button className="px-3 py-2 rounded border border-white/10 text-sm" onClick={()=>{
           const payload={
             at:new Date().toISOString(),

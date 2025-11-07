@@ -15,6 +15,8 @@ export type AppState={
   showRealtime:boolean;
   showHistorical:boolean;
   showHeatmap:boolean;
+  showLabels:boolean;
+  autoRotate:boolean;
   arcs:ArcDatum[];
   history:Record<string, Sample[]>;
   selectedArcId?:string;
@@ -30,6 +32,8 @@ export type AppState={
   toggleRealtime:()=>void;
   toggleHistorical:()=>void;
   toggleHeatmap:()=>void;
+  toggleLabels:()=>void;
+  toggleAutoRotate:()=>void;
   regenMock:()=>void;
   stopMock:()=>void;
   probeReal:()=>void;
@@ -51,6 +55,8 @@ export const useAppStore=create<AppState>((set,get)=>({
   showRealtime:true,
   showHistorical:false,
   showHeatmap:false,
+  showLabels:true,
+  autoRotate:false,
   arcs:buildExchangeToRegionArcs(),
   history:{},
   exchangesEnabled:new Set<string>(),
@@ -60,6 +66,8 @@ export const useAppStore=create<AppState>((set,get)=>({
   toggleRealtime:()=>set(s=>({showRealtime:!s.showRealtime})),
   toggleHistorical:()=>set(s=>({showHistorical:!s.showHistorical})),
   toggleHeatmap:()=>set(s=>({showHeatmap:!s.showHeatmap})),
+  toggleLabels:()=>set(s=>({showLabels:!s.showLabels})),
+  toggleAutoRotate:()=>set(s=>({autoRotate:!s.autoRotate})),
   regenMock:()=>{
     const arcs=buildExchangeToRegionArcs();
     // update history with latest snapshot samples.

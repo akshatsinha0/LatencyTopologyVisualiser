@@ -11,6 +11,7 @@ import "./globals.css";
 const GlobeScene = dynamic(() => import("@/_components/GlobeScene"), { ssr: false });
 const ControlPanel = dynamic(() => import("@/_components/ControlPanel"), { ssr: false });
 const Legend = dynamic(() => import("@/_components/Legend"), { ssr: false });
+const ArcDetails = dynamic(() => import("@/_components/ArcDetails"), { ssr: false });
 
 export default function Home() {
   return (
@@ -22,6 +23,7 @@ export default function Home() {
         <div className="absolute left-4 bottom-4 right-4 lg:left-6 lg:right-auto">
           <Legend />
         </div>
+        <ArcDetails />
       </main>
       <aside className="panel p-4 lg:p-6">
         <h1 className="text-xl font-semibold mb-3">Latency Topology Visualizer.</h1>
